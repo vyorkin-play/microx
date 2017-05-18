@@ -1,2 +1,2 @@
-floppya: 1_44=boot_sect_addressing.bin, status=inserted
+floppya: 1_44=boot_sect_q4.bin, status=inserted
 boot: a
