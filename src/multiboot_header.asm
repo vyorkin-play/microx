@@ -1,3 +1,4 @@
+; see: http://nongnu.askapache.com/grub/phcoder/multiboot.pdf
 section .multiboot_header
 header_start:
   dd 0xe85250d6			; magic number (multiboot 2)
