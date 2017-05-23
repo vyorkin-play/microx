@@ -13,4 +13,5 @@ Mac OS X:
 
 ## resources
 
-[writing an OS in Rust](http://os.phil-opp.com/)
+* [writing an OS in Rust](http://os.phil-opp.com/)
+* [intermezzOS book](http://intermezzos.github.io/book/)
