@@ -4,6 +4,8 @@ yet another OS built in Rust
 
 ## prerequisites
 
+emulation: [bochs](https://github.com/larsr/bochs) or [qemu](http://www.qemu.org/)
+
 Mac OS X:
 
 * [grub2](http://wiki.osdev.org/GRUB_2#Installing_GRUB_2_on_OS_X)
