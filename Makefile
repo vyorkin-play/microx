@@ -16,7 +16,7 @@ build/os.iso: build/kernel.bin src/grub.cfg
 	grub-mkrescue -o build/os.iso build/isofiles
 
 run: build/os.iso
-	bochs
+	qemu-system-x86_64 -cdrom build/os.iso
 
 clean:
 	rm -rf build/*

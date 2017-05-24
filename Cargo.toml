@@ -1,0 +1,12 @@
+[package]
+name = "microx"
+version = "0.1.0"
+authors = ["Vasiliy Yorkin <vasiliy.yorkin@gmail.com>"]
+
+[lib]
+crate-type = ["staticlib"]
+
+[profile.release]
+panic = "abort"
+
+[dependencies]

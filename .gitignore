@@ -12,3 +12,5 @@ boot
 *.bin
 *.iso
 .vagrant
+target
+Cargo.lock
