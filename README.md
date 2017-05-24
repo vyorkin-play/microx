@@ -6,6 +6,8 @@ yet another OS built in Rust
 
 emulation: [bochs](https://github.com/larsr/bochs) or [qemu](http://www.qemu.org/)
 
+here is how to install qemu on Mac OS X: `brew install qemu --with-sdl`
+
 Mac OS X:
 
 * [grub2](http://wiki.osdev.org/GRUB_2#Installing_GRUB_2_on_OS_X)
