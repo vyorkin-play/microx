@@ -1,11 +1,8 @@
 #![feature(lang_items)]
 #![no_std]
 
-#[lang = "eh_personality"]
-extern fn eh_personality() {
-}
+#[no_mangle]
+pub extern fn rust_main() {}
 
-#[lang = "panic_fmt"]
-extern fn rust_begin_panic() -> ! {
-    loop {}
-}
+#[lang = "eh_personality"] extern fn eh_personality() {}
+#[lang = "panic_fmt"] #[no_mangle] pub extern fn panic_fmt() -> ! {loop{}}
