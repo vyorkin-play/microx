@@ -15,5 +15,7 @@ Mac OS X:
 
 ## resources
 
+* [Modern Operating Systems (4th Edition), Andrew S. Tanenbaum](https://www.amazon.com/Modern-Operating-Systems-Andrew-Tanenbaum/dp/013359162X)
+* [some](https://www.youtube.com/watch?v=qcBIvnQt0Bw&list=PLiwt1iVUib9s2Uo5BeYmwkDFUh70fJPxX) [videos](https://www.youtube.com/watch?v=8kBPRrHOTwg) on youtube :D
 * [writing an OS in Rust](http://os.phil-opp.com/)
 * [intermezzOS book](http://intermezzos.github.io/book/)
