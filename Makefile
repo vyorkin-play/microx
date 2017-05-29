@@ -1,27 +1,45 @@
-default: run
+arch ?= x86_64
+target ?= $(arch)-microx
+kernel := build/kernel-$(arch).bin
+iso := build/os-$(arch).iso
 
-build/multiboot_header.o: src/multiboot_header.asm
-	nasm -f elf64 src/multiboot_header.asm -o build/multiboot_header.o
+microx_os := target/$(target)/debug/libmicrox.a
+linker_script := src/arch/$(arch)/linker.ld
+grub_cfg := src/arch/$(arch)/grub.cfg
 
-build/boot.o: src/boot.asm
-	nasm -f elf64 src/boot.asm -o build/boot.o
+assembly_source_files := $(wildcard src/arch/$(arch)/*.asm)
+assembly_object_files := $(patsubst src/arch/$(arch)/%.asm, \
+	build/arch/$(arch)/%.o, $(assembly_source_files))
 
-build/long_mode_init.o: src/long_mode_init.asm
-	nasm -f elf64 src/long_mode_init.asm -o build/long_mode_init.o
-
-build/kernel.bin: build/multiboot_header.o build/boot.o build/long_mode_init.o src/linker.ld
-	x86_64-pc-elf-ld -n -o build/kernel.bin -T src/linker.ld build/multiboot_header.o build/boot.o build/long_mode_init.o
-
-build/os.iso: build/kernel.bin src/grub.cfg
-	mkdir -p build/isofiles/boot/grub
-	cp src/grub.cfg build/isofiles/boot/grub
-	cp build/kernel.bin build/isofiles/boot
-	grub-mkrescue -o build/os.iso build/isofiles
-
-run: build/os.iso
-	qemu-system-x86_64 -cdrom build/os.iso
+all: $(kernel)
 
 clean:
-	rm -rf build/*
+	@xargo clean
+	@rm -rf build/*
 
-.PHONY: clean
+run: $(iso)
+	@qemu-system-x86_64 -cdrom $(iso) -s
+
+debug: $(iso)
+	@qemu-system-x86_64 -cdrom $(iso) -s -S
+
+iso: $(iso)
+
+$(iso): $(kernel) $(grub_cfg)
+	@mkdir -p build/isofiles/boot/grub
+	@cp $(kernel) build/isofiles/boot/kernel.bin
+	@cp $(grub_cfg) build/isofiles/boot/grub
+	@grub-mkrescue -o $(iso) build/isofiles 2> /dev/null
+	@rm -r build/isofiles
+
+$(kernel): cargo $(microx_os) $(assembly_object_files) $(linker_script)
+	@x86_64-pc-elf-ld -n --gc-sections -T $(linker_script) -o $(kernel) $(assembly_object_files) $(microx_os)
+
+cargo:
+	@xargo build --target $(target)
+
+build/arch/$(arch)/%.o: src/arch/$(arch)/%.asm
+	@mkdir -p $(shell dirname $@)
+	@nasm -f elf64 $< -o $@
+
+.PHONY: all clean debug run iso cargo
