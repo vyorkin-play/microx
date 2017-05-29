@@ -1,4 +1,5 @@
 global start
+extern long_mode_start
 
 section .text
 bits 32
@@ -9,56 +10,11 @@ start:
   call check_cpuid
   call check_long_mode
 
-  mov eax, p3_table
-  or eax, 0b11
-  mov dword [p4_table + 0], eax
-
-  mov eax, p2_table
-  or eax, 0b11
-  mov dword [p3_table + 0], eax
-
-  ; setup the level-2 page table
-  ; to have valid references to pages
-  mov ecx, 0
-.map_p2_table:
-  mov eax, 0x200000               ; each page is 2MiB
-  mul ecx                         ; move by page size
-  or eax, 0b10000011              ; present, writable, huge page
-  mov [p2_table + ecx * 8], eax   ;
-
-  inc ecx
-  cmp ecx, 512
-  jne .map_p2_table
-
-  ; move page table address to cr3
-  mov eax, p4_table
-  mov cr3, eax
-
-  ; enable physical address extension (PAE)
-  mov eax, cr4
-  or eax, 1 << 5
-  mov cr4, eax
-
-  ; set the long mode bit
-  mov ecx, 0xC0000080
-  rdmsr
-  or eax, 1 << 8
-  wrmsr
-
-  ; enable paging
-  mov eax, cr0
-  or eax, 1 << 31
-  or eax, 1 << 16
-  mov cr0, eax
+  call setup_page_tables
+  call enable_paging
 
   ; load GDT
   lgdt [gdt64.pointer]
-
-  ; update selectors
-  mov ax, gdt64.data
-  mov ss, ax
-  mov ds, ax
-  mov es, ax
 
   ; jump to the long mode
   jmp gdt64.code:long_mode_start
@@ -75,6 +31,7 @@ check_multiboot:
   mov al, "0"
   jmp error
 
+; see http://wiki.osdev.org/Setting_Up_Long_Mode#Detecting_the_Presence_of_Long_Mode
 check_cpuid:
     ; Check if CPUID is supported by attempting to flip the ID bit (bit 21)
     ; in the FLAGS register. If we can flip it, CPUID is available.
@@ -112,6 +69,7 @@ check_cpuid:
     mov al, "1"
     jmp error
 
+; see http://wiki.osdev.org/Setting_Up_Long_Mode#x86_or_x86-64
 check_long_mode:
     ; test if extended processor info in available
     mov eax, 0x80000000    ; implicit argument for cpuid
@@ -138,6 +96,57 @@ error:
   mov byte  [0xb800a], al
   hlt
 
+; points the table entries at each other
+setup_page_tables:
+  ; point the first entry of the level-4 page table
+  ; to the first entry in the level-3 table
+  mov eax, p3_table
+  or eax, 0b11                    ; set the "present" and "writable" bits
+  mov dword [p4_table + 0], eax   ; link tables
+
+  ; same shit for p3 and p2 page tables
+  mov eax, p2_table
+  or eax, 0b11
+  mov dword [p3_table + 0], eax
+
+  ; setup the level-2 page table
+  ; to have valid references to pages
+  mov ecx, 0
+.map_p2_table:
+  mov eax, 0x200000               ; each page is 2MiB
+  mul ecx                         ; move by page size
+  ; set the "present", "writable" and "huge page" bits
+  ; without the "huge page" bit, we'd have 4KiB pages instead of 2MiB pages
+  or eax, 0b10000011
+  mov [p2_table + ecx * 8], eax   ;
+  inc ecx
+  cmp ecx, 512
+  jne .map_p2_table
+  ret
+
+enable_paging:
+  ; move level-4 page table address to cr3
+  mov eax, p4_table
+  mov cr3, eax
+
+  ; enable physical address extension (PAE)
+  mov eax, cr4
+  or eax, 1 << 5
+  mov cr4, eax
+
+  ; set the long mode bit in the EFER MSR (model specific register)
+  mov ecx, 0xC0000080
+  rdmsr
+  or eax, 1 << 8
+  wrmsr
+
+  ; enable paging (in the cr0 register)
+  mov eax, cr0
+  or eax, 1 << 31
+  mov cr0, eax
+
+  ret
+
 section .bss
 align 4096
 p4_table:
@@ -152,18 +161,9 @@ stack_top:
 
 section .rodata
 gdt64:
-  dq 0
+  dq 0 ; zero entry
 .code: equ $ - gdt64
-  dq (1 << 44) | (1 << 47) | (1 << 41) | (1 << 43) | (1 << 53)
-.data: equ $ - gdt64
-  dq (1 << 44) | (1 << 47) | (1 << 41)
+  dq (1 << 43) | (1 << 44) | (1 << 47) | (1 << 53) ; code segment
 .pointer:
-  dw .pointer - gdt64 - 1
+  dw $ - gdt64 - 1
   dq gdt64
-
-section .text
-bits 64
-long_mode_start:
-  mov rax, 0x2f592f412f4b2f4f
-  mov qword [0xb8000], rax
-  hlt

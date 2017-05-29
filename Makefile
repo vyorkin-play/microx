@@ -6,8 +6,11 @@ build/multiboot_header.o: src/multiboot_header.asm
 build/boot.o: src/boot.asm
 	nasm -f elf64 src/boot.asm -o build/boot.o
 
-build/kernel.bin: build/multiboot_header.o build/boot.o src/linker.ld
-	x86_64-pc-elf-ld -n -o build/kernel.bin -T src/linker.ld build/multiboot_header.o build/boot.o
+build/long_mode_init.o: src/long_mode_init.asm
+	nasm -f elf64 src/long_mode_init.asm -o build/long_mode_init.o
+
+build/kernel.bin: build/multiboot_header.o build/boot.o build/long_mode_init.o src/linker.ld
+	x86_64-pc-elf-ld -n -o build/kernel.bin -T src/linker.ld build/multiboot_header.o build/boot.o build/long_mode_init.o
 
 build/os.iso: build/kernel.bin src/grub.cfg
 	mkdir -p build/isofiles/boot/grub
