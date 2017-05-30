@@ -11,3 +11,4 @@ panic = "abort"
 
 [dependencies]
 rlibc = "1.0"
+volatile = "0.2.3"
